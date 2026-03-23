@@ -179,6 +179,10 @@ task3_incremental.py
 
 > **Note:** Both notebooks include a `%pip install requests python-dotenv` cell at the top that automatically installs the required packages before execution.
 
+> **Warning you can ignore:** When running Task 1 or Task 3 notebooks, Databricks may show the following warning — simply close it and ignore it. The required libraries are already loaded and the environment works correctly:
+>
+> *"Environment configurations are not persisted in source-format notebooks. Enable Include in exports in the environment panel to preserve your environment."*
+
 **Full load (Task 1)** — Open `task1_ingest.py` in Databricks and click **Run All**.
 
 This will create:
