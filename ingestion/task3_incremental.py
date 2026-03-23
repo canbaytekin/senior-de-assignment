@@ -2,6 +2,10 @@
 
 # COMMAND ----------
 
+# MAGIC %pip install requests python-dotenv
+
+# COMMAND ----------
+
 # MAGIC %md
 # MAGIC # Task 3 — Incremental Ingestion with Watermark Logic
 # MAGIC

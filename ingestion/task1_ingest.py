@@ -2,6 +2,10 @@
 
 # COMMAND ----------
 
+# MAGIC %pip install requests python-dotenv
+
+# COMMAND ----------
+
 # MAGIC %md
 # MAGIC # Task 1 — Raw Data Ingestion with Data Quality Handling
 # MAGIC

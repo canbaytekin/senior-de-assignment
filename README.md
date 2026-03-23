@@ -175,9 +175,11 @@ task1_ingest.py
 task3_incremental.py
 ```
 
-**Full load (Task 1)** — run once to populate all bronze tables:
+### Running the Notebooks
 
-Open `task1_ingest.py` in Databricks and click **Run All**.
+> **Note:** Both notebooks include a `%pip install requests python-dotenv` cell at the top that automatically installs the required packages before execution.
+
+**Full load (Task 1)** — Open `task1_ingest.py` in Databricks and click **Run All**.
 
 This will create:
 - `workspace.bronze_landing.transactions` — raw mirror of the API response
