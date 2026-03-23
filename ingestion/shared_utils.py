@@ -35,17 +35,42 @@ from delta.tables import DeltaTable
 from dotenv import load_dotenv
 
 try:
-    _THIS_DIR = os.path.dirname(__file__)
+    _THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 except NameError:
     _THIS_DIR = None  # __file__ is not defined in Databricks notebooks
 
 # In Databricks Repos, resolve the notebook directory from dbutils context
 if not _THIS_DIR:
     try:
-        _nb_path = dbutils.notebook.entry_point.getDbutils().notebook().getContext().notebookPath().get()
-        _THIS_DIR = "/Workspace" + str(os.path.dirname(_nb_path))
+        _nb_path = str(
+            dbutils.notebook.entry_point
+            .getDbutils().notebook().getContext()
+            .notebookPath().get()
+        )
+        # notebookPath() returns the workspace-relative path, e.g.
+        # /Repos/user@example.com/repo-name/ingestion/shared_utils
+        _candidate = "/Workspace" + os.path.dirname(_nb_path)
+        if os.path.isdir(_candidate):
+            _THIS_DIR = _candidate
     except Exception:
         pass
+
+# Fallback: search well-known locations for raw_table_ddl.sql
+if not _THIS_DIR or not os.path.isfile(os.path.join(_THIS_DIR, "raw_table_ddl.sql")):
+    _search_dirs = [os.getcwd()]
+    try:
+        _search_dirs.append(os.path.dirname(os.path.abspath(__file__)))
+    except NameError:
+        pass
+    # Common Databricks Repos mount-points
+    _search_dirs += [
+        "/Workspace/Repos/baytekin93can@gmail.com/senior-de-assignment/ingestion",
+        os.path.join(os.getcwd(), "ingestion"),
+    ]
+    for _d in _search_dirs:
+        if _d and os.path.isfile(os.path.join(_d, "raw_table_ddl.sql")):
+            _THIS_DIR = _d
+            break
 
 if _THIS_DIR:
     load_dotenv(os.path.join(_THIS_DIR, ".env"))
@@ -654,7 +679,7 @@ def save_watermark(table_name, max_date, run_ts, records_ingested):
 #  TABLE INITIALISATION — execute DDL from raw_table_ddl.sql                   #
 # --------------------------------------------------------------------------- #
 
-DDL_PATH = os.path.join(_THIS_DIR, "raw_table_ddl.sql") if _THIS_DIR else "/Workspace/raw_table_ddl.sql"
+DDL_PATH = os.path.join(_THIS_DIR, "raw_table_ddl.sql") if _THIS_DIR else "raw_table_ddl.sql"
 
 
 def ensure_tables_exist(ddl_path=DDL_PATH):
