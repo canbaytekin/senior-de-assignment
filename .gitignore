@@ -1,0 +1,10 @@
+dbt_project/target/
+dbt_project/logs/
+dbt_project/dbt_packages/
+dbt_project/profiles.yml
+__pycache__/
+*.pyc
+.env
+venv/
+*.db
+.DS_Store

@@ -1,0 +1,95 @@
+version: 2
+
+sources:
+  - name: bronze
+    description: "Bronze layer — validated, append-only transactions from the API ingestion pipeline"
+    schema: bronze
+    tables:
+      - name: transactions
+        description: >
+          Validated transactions. May contain multiple rows per transaction_id
+          with different natural_key_hash values (representing changed records).
+        columns:
+          - name: id
+            description: "Supabase internal row ID (nullable; not used as primary key)"
+
+          - name: transaction_id
+            description: "Application-level business key. Format: TXN-NNNN"
+            tests:
+              - not_null
+
+          - name: account_id
+            description: "Account identifier. Format: ACC-NNNN (ACC-1001 through ACC-1020)"
+            tests:
+              - not_null
+
+          - name: transaction_date
+            description: "ISO 8601 UTC timestamp of the transaction (e.g. 2024-01-15T08:23:11Z). Valid range: 2024-01-01 to 2024-03-31"
+            tests:
+              - not_null
+
+          - name: amount
+            description: "Transaction amount in the specified currency. Strictly positive, rounded to 2 decimal places"
+            tests:
+              - not_null
+
+          - name: currency
+            description: "ISO 4217 three-letter currency code (uppercase). One of: USD, EUR, GBP, CHF, JPY, AUD, CAD"
+            tests:
+              - not_null
+              - accepted_values:
+                  values: ["USD", "EUR", "GBP", "CHF", "JPY", "AUD", "CAD"]
+
+          - name: transaction_type
+            description: "Direction of the transaction. Must be lowercase: 'debit' or 'credit'"
+            tests:
+              - not_null
+              - accepted_values:
+                  values: ["debit", "credit"]
+
+          - name: merchant_name
+            description: "Name of the merchant or counterparty. Must contain at least one non-whitespace character"
+            tests:
+              - not_null
+
+          - name: merchant_category
+            description: "Category of the merchant. One of 12 allowed values (e.g. e-commerce, travel, groceries)"
+            tests:
+              - not_null
+              - accepted_values:
+                  values:
+                    - "e-commerce"
+                    - "travel"
+                    - "food_and_beverage"
+                    - "groceries"
+                    - "electronics"
+                    - "retail"
+                    - "entertainment"
+                    - "health"
+                    - "transportation"
+                    - "home_and_garden"
+                    - "payroll"
+                    - "transfer"
+
+          - name: status
+            description: "Processing status. Must be lowercase: completed, pending, failed, or reversed"
+            tests:
+              - not_null
+              - accepted_values:
+                  values: ["completed", "pending", "failed", "reversed"]
+
+          - name: country_code
+            description: "ISO 3166-1 alpha-2 country code of the merchant location (two uppercase letters)"
+            tests:
+              - not_null
+
+          - name: natural_key_hash
+            description: "SHA-256 hash of natural-key fields; used for MERGE-based deduplication across runs"
+            tests:
+              - not_null
+              - unique
+
+          - name: ingestion_timestamp
+            description: "UTC timestamp of when this record was written to the bronze layer"
+            tests:
+              - not_null

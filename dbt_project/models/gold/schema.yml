@@ -1,0 +1,145 @@
+version: 2
+
+models:
+  - name: dim_account
+    description: "Account dimension — one row per account_id"
+    columns:
+      - name: account_id
+        description: "Account identifier in ACC-NNNN format. The dataset contains 20 accounts: ACC-1001 through ACC-1020."
+        tests:
+          - unique
+          - not_null
+
+  - name: dim_merchant
+    description: "Merchant dimension — one row per merchant_name"
+    columns:
+      - name: merchant_sk
+        description: "Surrogate key (hash of merchant_name)"
+        tests:
+          - unique
+          - not_null
+      - name: merchant_name
+        description: "Name of the merchant or counterparty. Must contain at least one non-whitespace character."
+        tests:
+          - unique
+          - not_null
+
+  - name: dim_date
+    description: "Date dimension — one row per calendar date in the dataset"
+    columns:
+      - name: date_day
+        description: "Calendar date"
+        tests:
+          - unique
+          - not_null
+
+  - name: dim_currency
+    description: "Currency dimension — one row per ISO 4217 currency code with USD exchange rate"
+    columns:
+      - name: currency_sk
+        description: "Surrogate key (hash of currency_code)"
+        tests:
+          - unique
+          - not_null
+      - name: currency_code
+        description: "ISO 4217 currency code (e.g. USD, EUR)"
+        tests:
+          - unique
+          - not_null
+      - name: currency_name
+        description: "Human-readable currency name"
+        tests:
+          - not_null
+      - name: usd_exchange_rate
+        description: "Multiplier to convert 1 unit of this currency to USD"
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: false
+
+  - name: fact_transaction
+    description: >
+      Transaction fact table. Grain: one row per current transaction.
+      Joins to dim_account, dim_merchant, dim_date, dim_currency.
+      amount is always in USD; use amount_original for the native-currency value.
+    columns:
+      - name: transaction_sk
+        description: "Surrogate key from silver SCD2"
+        tests:
+          - unique
+          - not_null
+      - name: transaction_id
+        description: "Degenerate dimension — business key"
+        tests:
+          - unique
+          - not_null
+      - name: account_id
+        description: "Account identifier in ACC-NNNN format. FK to dim_account."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_account')
+              field: account_id
+      - name: merchant_sk
+        description: "Surrogate key for the merchant. FK to dim_merchant."
+        tests:
+          - relationships:
+              to: ref('dim_merchant')
+              field: merchant_sk
+      - name: currency_sk
+        description: "FK to dim_currency"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_currency')
+              field: currency_sk
+      - name: transaction_date
+        description: "Calendar date of the transaction. FK to dim_date. All valid records fall within 2024-01-01 and 2024-03-31."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_date')
+              field: date_day
+      - name: amount_original
+        description: "Raw transaction amount in the original currency (see currency column). Must be strictly positive and rounded to 2 decimal places."
+        tests:
+          - not_null
+      - name: amount
+        description: "Transaction amount converted to USD using dim_currency.usd_exchange_rate — use this for all monetary aggregations"
+        tests:
+          - not_null
+      - name: currency
+        description: "ISO 4217 three-letter currency code (uppercase) stored as a degenerate dimension. Valid values: USD, EUR, GBP, CHF, JPY, AUD, CAD."
+        tests:
+          - not_null
+      - name: transaction_type
+        description: "Direction of the transaction — 'debit' or 'credit' (lowercase)."
+        tests:
+          - not_null
+      - name: status
+        description: "Processing status — 'completed', 'pending', 'failed', or 'reversed' (lowercase). Only 'completed' records are included in financial summaries."
+        tests:
+          - not_null
+      - name: country_code
+        description: "ISO 3166-1 alpha-2 country code of the merchant location, stored as a degenerate dimension. Must be exactly two uppercase letters and an officially assigned code."
+        tests:
+          - not_null
+      - name: merchant_category
+        description: "Category of the merchant (case-sensitive lowercase). 12 allowed values: e-commerce, travel, food_and_beverage, groceries, electronics, retail, entertainment, health, transportation, home_and_garden, payroll, transfer."
+        tests:
+          - not_null
+          - accepted_values:
+              values:
+                - e-commerce
+                - travel
+                - food_and_beverage
+                - groceries
+                - electronics
+                - retail
+                - entertainment
+                - health
+                - transportation
+                - home_and_garden
+                - payroll
+                - transfer

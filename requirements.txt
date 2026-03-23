@@ -1,0 +1,7 @@
+# Python 3.13 required
+
+# --- dbt & Databricks ---
+dbt-databricks>=1.11.6
+
+# --- Configuration ---
+python-dotenv>=1.0.0

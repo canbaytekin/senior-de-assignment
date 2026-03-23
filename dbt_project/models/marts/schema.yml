@@ -1,0 +1,74 @@
+version: 2
+
+models:
+  - name: daily_account_summary
+    description: >
+      Daily aggregation per account from completed transactions.
+      One row per (account_id, transaction_date). Reads from gold star schema.
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - account_id
+            - transaction_date
+    columns:
+      - name: account_id
+        description: "Account identifier in ACC-NNNN format."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_account')
+              field: account_id
+
+      - name: transaction_date
+        description: "Calendar date of the aggregated transactions."
+        tests:
+          - not_null
+
+      - name: total_debit_amount
+        description: "Total debit amount in USD"
+        tests:
+          - not_null
+
+      - name: total_credit_amount
+        description: "Total credit amount in USD"
+        tests:
+          - not_null
+
+      - name: net_amount
+        description: "Net amount (credits minus debits) in USD"
+        tests:
+          - not_null
+
+      - name: transaction_count
+        description: "Total number of completed transactions in this account/date group."
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 1
+
+      - name: distinct_merchants
+        description: "Number of unique merchants transacted with on this date."
+        tests:
+          - not_null
+
+      - name: top_category
+        description: "Merchant category with the highest total USD spend for this account/date. Matches the 12 merchant_category values from the transactions schema."
+        tests:
+          - accepted_values:
+              values:
+                - e-commerce
+                - travel
+                - food_and_beverage
+                - groceries
+                - electronics
+                - retail
+                - entertainment
+                - health
+                - transportation
+                - home_and_garden
+                - payroll
+                - transfer
+
+      - name: updated_at
+        tests:
+          - not_null

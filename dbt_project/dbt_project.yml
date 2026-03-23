@@ -1,0 +1,30 @@
+name: senior_de_assignment
+version: '1.0.0'
+
+config-version: 2
+
+flags:
+  use_managed_iceberg: False
+  use_concurrent_microbatch: False
+  use_materialization_v2: False
+
+profile: 'senior_de_assignment'
+
+model-paths: ["models"]
+test-paths: ["tests"]
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  senior_de_assignment:
+    silver:
+      +materialized: table
+      +schema: silver
+    gold:
+      +materialized: table
+      +schema: gold
+    marts:
+      +materialized: table
+      +schema: marts
