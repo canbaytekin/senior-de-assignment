@@ -39,6 +39,19 @@ try:
 except NameError:
     _THIS_DIR = None  # __file__ is not defined in Databricks notebooks
 
+# In Databricks, resolve the repo directory from the notebook context
+if not _THIS_DIR:
+    try:
+        _nb_path = (
+            spark.conf.get("spark.databricks.notebook.path", None)
+            if "spark" in dir()
+            else None
+        )
+        if _nb_path:
+            _THIS_DIR = "/Workspace" + "/".join(_nb_path.rsplit("/", 1)[:-1])
+    except Exception:
+        pass
+
 if _THIS_DIR:
     load_dotenv(os.path.join(_THIS_DIR, ".env"))
 
