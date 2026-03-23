@@ -121,10 +121,75 @@ The daily account summary mart aggregates only `completed` transactions. dbt tes
 
 ## Setup
 
+### 1. Connect the GitHub Repo to Databricks
+
+Databricks can sync notebooks directly from a Git repository so you don't have to upload files manually. Follow these steps:
+
+1. **Open your Databricks workspace** — Log in at your Databricks URL (e.g. `https://<your-workspace>.cloud.databricks.com`).
+
+2. **Navigate to Repos** — In the left sidebar, click **Workspace**, then click **Repos** (under your username). If you don't see a **Repos** folder, click **Home → Repos**.
+
+3. **Add the repo** — Click the **Add Repo** button (top-right). In the dialog:
+   - **Git repository URL:** paste `https://github.com/canbaytekin/senior-de-assignment.git`
+   - **Git provider:** select **GitHub**
+   - **Repository name:** leave the default (`senior-de-assignment`) or rename it
+   - Click **Create Repo**
+
+   Databricks will clone the repository into your Repos folder.
+
+4. **Navigate to the ingestion notebooks** — Expand **Repos → senior-de-assignment → ingestion** in the sidebar. You should see:
+   - `shared_utils.py`
+   - `task1_ingest.py`
+   - `task3_incremental.py`
+
+5. **Attach a cluster** — Open any notebook (e.g. `task1_ingest.py`). At the top of the notebook, click the cluster dropdown and select a running cluster (or create one). All three notebooks must run on the same cluster.
+
+> **Tip:** If you need to pull the latest changes later, open the repo folder in **Repos**, click the branch name at the top, and click **Pull**.
+
+---
+
+## Running the Ingestion (Databricks)
+
+The ingestion notebooks live in the `ingestion/` folder of the repo you just connected. Open them directly from **Repos → senior-de-assignment → ingestion** — no manual file upload needed.
+
+### Running the Notebooks
+
+> **Note:** Both notebooks include a `%pip install requests python-dotenv` cell at the top that automatically installs the required packages before execution.
+
+> **Warning you can ignore:** When running Task 1 or Task 3 notebooks, Databricks may show the following warning — simply close it and ignore it. The required libraries are already loaded and the environment works correctly:
+>
+> *"Environment configurations are not persisted in source-format notebooks. Enable Include in exports in the environment panel to preserve your environment."*
+
+**Full load (Task 1)** — Open `task1_ingest.py` in Databricks and click **Run All**.
+
+This will create:
+- `workspace.bronze_landing.transactions` — raw mirror of the API response
+- `workspace.bronze.transactions` — validated, deduplicated records
+- `workspace.bronze.quarantine_transactions` — invalid / duplicate records
+
+**Incremental load (Task 3)** — run on subsequent executions:
+
+Open `task3_incremental.py` in Databricks and click **Run All**.
+
+This will:
+1. Read the watermark from `workspace.default.ingestion_watermark`
+2. Fetch only new records from the API (with a 2-day lookback for late arrivals)
+3. MERGE clean records into the raw table and append quarantine rows
+4. Update the watermark
+
+To simulate two incremental runs and verify the watermark advances, you can run Task 3 twice. The output watermark files from the original runs are saved in `outputs/watermark_run1.json` and `outputs/watermark_run2.json` for reference.
+
+---
+
+## Running dbt Models
+
+
+After the bronze tables are populated, 
+
 ### 1. Clone the repo and create a virtual environment
 
 ```bash
-git clone <repo-url>
+git clone <https://github.com/canbaytekin/senior-de-assignment.git>
 cd senior-de-assignment
 
 python3.13 -m venv venv
@@ -165,72 +230,19 @@ dbt deps
 
 ---
 
-## Running the Ingestion (Databricks)
 
-The ingestion notebooks are designed to run on Databricks. Upload the three files under `ingestion/` to a Databricks workspace folder (keeping them in the same directory so `%run ./shared_utils` resolves correctly):
-
-```
-shared_utils.py
-task1_ingest.py
-task3_incremental.py
-```
-
-### Running the Notebooks
-
-> **Note:** Both notebooks include a `%pip install requests python-dotenv` cell at the top that automatically installs the required packages before execution.
-
-> **Warning you can ignore:** When running Task 1 or Task 3 notebooks, Databricks may show the following warning — simply close it and ignore it. The required libraries are already loaded and the environment works correctly:
->
-> *"Environment configurations are not persisted in source-format notebooks. Enable Include in exports in the environment panel to preserve your environment."*
-
-**Full load (Task 1)** — Open `task1_ingest.py` in Databricks and click **Run All**.
-
-This will create:
-- `workspace.bronze_landing.transactions` — raw mirror of the API response
-- `workspace.bronze.transactions` — validated, deduplicated records
-- `workspace.bronze.quarantine_transactions` — invalid / duplicate records
-
-**Incremental load (Task 3)** — run on subsequent executions:
-
-Open `task3_incremental.py` in Databricks and click **Run All**.
-
-This will:
-1. Read the watermark from `workspace.default.ingestion_watermark`
-2. Fetch only new records from the API (with a 2-day lookback for late arrivals)
-3. MERGE clean records into the raw table and append quarantine rows
-4. Update the watermark
-
-To simulate two incremental runs and verify the watermark advances, you can run Task 3 twice. The output watermark files from the original runs are saved in `outputs/watermark_run1.json` and `outputs/watermark_run2.json` for reference.
-
----
-
-## Running dbt Models
-
-After the bronze tables are populated, run dbt to build all downstream layers:
+run dbt to build all downstream layers:
 
 ```bash
 cd dbt_project
 dbt build
 ```
 
-Or run layers individually:
+Or if you run it second time with full refresh:
 
 ```bash
-dbt run --select silver      # bronze → silver (cleaned transactions)
-dbt run --select gold        # silver → dims + fact table
-dbt run --select marts       # gold → daily_account_summary
-```
-
-Run tests only:
-
-```bash
-dbt test
-```
-
-Run a specific model:
-
-```bash
-dbt run --select daily_account_summary
+cd dbt_project
+dbt build --full-refresh
 ```
 
 The models produce the following tables in the `workspace` catalog:
@@ -248,14 +260,8 @@ The models produce the following tables in the `workspace` catalog:
 
 ## Sample Outputs
 
-Pre-generated output files are included in the `outputs/` directory for reference:
+Pre-generated output files are not created due I choose to go with databricks+dbt solution. 
 
-| File | Description |
-|------|-------------|
-| `outputs/daily_summary_output.csv` | Result of `daily_account_summary` mart |
-| `outputs/quarantine_sample.csv` | Sample of quarantined (invalid) records |
-| `outputs/watermark_run1.json` | Watermark state after first incremental run |
-| `outputs/watermark_run2.json` | Watermark state after second incremental run |
 
 ---
 
