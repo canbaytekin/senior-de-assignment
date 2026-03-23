@@ -110,12 +110,16 @@ if raw_records:
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 9
 # --------------------------------------------------------------------------- #
 #  ⚠️  TEST INCREMENTAL LOAD — Uncomment the line below to inject synthetic    #
 #  test rows (April 2024 dates) into the landing table before classification.  #
 #  This simulates a "second run" scenario. See test_incremental.py for details.#
 # --------------------------------------------------------------------------- #
-# # MAGIC %run ./test_incremental
+
+# COMMAND ----------
+
+# MAGIC %run ./test_incremental
 
 # COMMAND ----------
 
@@ -286,4 +290,4 @@ log.info("=" * 60)
 
 # COMMAND ----------
 
-display(spark.sql(f"SELECT * FROM {WATERMARK_TABLE}"))
+display(spark.sql(f"SELECT * FROM workspace.default.ingestion_watermark"))
