@@ -1,4 +1,13 @@
 # Databricks notebook source
+# /// script
+# [tool.databricks.environment]
+# environment_version = "2"
+# dependencies = [
+#   "requests",
+#   "python-dotenv",
+# ]
+# ///
+
 
 # COMMAND ----------
 
@@ -177,11 +186,11 @@ log.info("=" * 60)
 
 # COMMAND ----------
 
-display(spark.sql(f"SELECT * FROM {RAW_TABLE} LIMIT 10"))
+display(spark.sql(f"SELECT * FROM workspace.bronze.transactions LIMIT 10"))
 
 # COMMAND ----------
 
-display(spark.sql(f"SELECT * FROM {QUARANTINE_TABLE}"))
+display(spark.sql(f"SELECT * FROM workspace.bronze.quarantine_transactions"))
 
 # COMMAND ----------
 

@@ -1,4 +1,9 @@
 # Databricks notebook source
+# /// script
+# [tool.databricks.environment]
+# environment_version = "2"
+# ///
+
 
 # COMMAND ----------
 
@@ -695,10 +700,17 @@ def ensure_tables_exist(ddl_path=DDL_PATH):
 
     for statement in ddl_content.split(";"):
         stmt = statement.strip()
-        if stmt and (stmt.upper().startswith("CREATE")):
+        # Strip leading SQL comment lines so the CREATE check isn't
+        # blocked by -- comment blocks that precede the DDL keyword.
+        stmt_body = "\n".join(
+            ln for ln in stmt.splitlines()
+            if not ln.lstrip().startswith("--")
+        ).strip()
+        if stmt_body and stmt_body.upper().startswith("CREATE"):
             spark.sql(stmt)
 
     log.info("ensure_tables_exist | DDL executed — all schemas and tables ensured.")
 
 # COMMAND ----------
+
 

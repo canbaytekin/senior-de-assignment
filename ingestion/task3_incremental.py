@@ -1,5 +1,6 @@
 # Databricks notebook source
 
+
 # COMMAND ----------
 
 # MAGIC %pip install requests python-dotenv
@@ -114,7 +115,7 @@ if raw_records:
 #  test rows (April 2024 dates) into the landing table before classification.  #
 #  This simulates a "second run" scenario. See test_incremental.py for details.#
 # --------------------------------------------------------------------------- #
-# %run ./test_incremental
+ %run ./test_incremental
 
 # COMMAND ----------
 
