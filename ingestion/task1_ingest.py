@@ -7,20 +7,12 @@
 #   "python-dotenv",
 # ]
 # ///
-
-
-# COMMAND ----------
-
-# MAGIC %pip install requests python-dotenv
-
-# COMMAND ----------
-
 # MAGIC %md
 # MAGIC # Task 1 — Raw Data Ingestion with Data Quality Handling
 # MAGIC
 # MAGIC This notebook performs a **full ingestion** of all transactions from a REST API (Supabase).
 # MAGIC It validates each record against the schema, quarantines invalid/duplicate rows,
-# MAGIC and persists clean records into a Delta **raw/bronze** table. On each execution it:
+# MAGIC and persists clean records into a Delta **bronze** table. On each execution it:
 # MAGIC 1. Fetches **all** transaction records from the Supabase REST API (with CSV fallback).
 # MAGIC 2. **Appends** every fetched record to the **landing table** (exact source mirror + ingestion timestamp).
 # MAGIC 3. Reads the landing table, validates each record against the schema, and deduplicates.
@@ -32,9 +24,13 @@
 # MAGIC **Data quality:** Records are validated for required fields, format correctness, enum membership,
 # MAGIC and positive amounts. Duplicates are detected via SHA-256 natural-key hashing and routed to quarantine.
 # MAGIC
-# MAGIC **How to use:** Set the widgets / parameters in Cmd 2, then _Run All_.
+# MAGIC **How to use:** _Run All_.
 # MAGIC
 # MAGIC Shared functions (validation, API helpers, schemas) are loaded from `shared_utils`.
+
+# COMMAND ----------
+
+# MAGIC %pip install requests python-dotenv
 
 # COMMAND ----------
 

@@ -1,12 +1,4 @@
 # Databricks notebook source
-
-
-# COMMAND ----------
-
-# MAGIC %pip install requests python-dotenv
-
-# COMMAND ----------
-
 # MAGIC %md
 # MAGIC # Task 3 — Incremental Ingestion with Watermark Logic
 # MAGIC
@@ -28,6 +20,10 @@
 # MAGIC from the watermark before querying the API. This ensures records that arrive with a
 # MAGIC `transaction_date` slightly behind the watermark are still captured. The MERGE
 # MAGIC operation prevents true duplicates from being inserted.
+
+# COMMAND ----------
+
+# MAGIC %pip install requests python-dotenv
 
 # COMMAND ----------
 
@@ -273,7 +269,7 @@ log.info("=" * 60)
 # MAGIC
 # MAGIC **Mechanism:** After each successful run the pipeline records the maximum
 # MAGIC `transaction_date` from the ingested batch. On the next run it reads this value,
-# MAGIC subtracts a configurable lookback window (default 2 days), and passes the adjusted
+# MAGIC subtracts a configurable lookback window (default 30 days), and passes the adjusted
 # MAGIC timestamp as a `gte.` filter to the API. This means the API returns a small overlap
 # MAGIC of already-seen records, but the MERGE into the raw Delta table (matched on
 # MAGIC `transaction_id`) ensures no true duplicates are written.
@@ -283,9 +279,9 @@ log.info("=" * 60)
 # MAGIC   everything — equivalent to Task 1.
 # MAGIC - **No new records:** The API returns an empty page; the pipeline logs "0 rows processed"
 # MAGIC   and keeps the watermark unchanged.
-# MAGIC - **Late-arriving data:** The 2-day lookback window re-fetches a small sliding window of
+# MAGIC - **Late-arriving data:** The 30-day lookback window re-fetches a small sliding window of
 # MAGIC   records that the source system may have back-dated. For this 3-month banking dataset a
-# MAGIC   2-day window is conservative enough to catch late postings while keeping API traffic low.
+# MAGIC   30-day window is conservative enough to catch late postings while keeping API traffic low.
 # MAGIC   In production the window size would be tuned based on observed source-system latency.
 
 # COMMAND ----------

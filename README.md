@@ -12,6 +12,22 @@ dbt then transforms the clean bronze data into silver, gold (dims + facts), and 
 
 ---
 
+## Setup
+
+### Environment Variables
+
+Create a `.env` file inside the `ingestion/` directory with the following values (shared here since this is an assignment):
+
+```dotenv
+API_BASE_URL=https://fgbjekjqnbmtkmeewexb.supabase.co/rest/v1
+API_ENDPOINT=/transactions
+SUPABASE_API_KEY=sb_publishable_W2MbiakvFFthMHtlrzSkQw_URTiUI6G
+```
+
+The ingestion notebooks (`task1_ingest.py`, `task3_incremental.py`) load these via `shared_utils.py` using `python-dotenv`. Alternatively, you can set them as Databricks cluster environment variables or Databricks secrets.
+
+---
+
 ## Why This Tech Stack?
 
 Choosing the right tools matters as much as writing the code. Here's the reasoning behind each major technology decision in this project:
