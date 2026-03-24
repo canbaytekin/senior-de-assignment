@@ -7,19 +7,19 @@
 
     Parameters
     ----------
-    source_cte   : str   – Name of the CTE that contains the cleaned source rows.
-    primary_key  : str   – Business key column (e.g. 'transaction_id').
-    order_by     : str   – Column that determines version ordering (e.g. 'ingestion_timestamp').
-    hash_column  : str   – Change-detection hash column (e.g. 'natural_key_hash').
+    source_cte   : str   - Name of the CTE that contains the cleaned source rows.
+    primary_key  : str   - Business key column (e.g. 'transaction_id').
+    order_by     : str   - Column that determines version ordering (e.g. 'ingestion_timestamp').
+    hash_column  : str   - Change-detection hash column (e.g. 'natural_key_hash').
                            Consecutive rows with the same hash for a given PK are
                            treated as duplicates and collapsed.
 
     Produced columns (appended to the source columns)
     --------------------------------------------------
-    version_number : INT       – Sequential version counter per PK (1-based).
-    valid_from     : TIMESTAMP – When this version became effective.
-    valid_to       : TIMESTAMP – When the next version replaced it (NULL if current).
-    is_current     : BOOLEAN   – TRUE for the latest version.
+    version_number : INT       - Sequential version counter per PK (1-based).
+    valid_from     : TIMESTAMP - When this version became effective.
+    valid_to       : TIMESTAMP - When the next version replaced it (NULL if current).
+    is_current     : BOOLEAN   - TRUE for the latest version.
 
     Usage
     -----
@@ -86,9 +86,12 @@ scd2_versioned AS (
             ORDER BY {{ order_by }}
         ) AS version_number,
         CAST({{ order_by }} AS TIMESTAMP) AS valid_from,
-        LEAD(CAST({{ order_by }} AS TIMESTAMP)) OVER (
-            PARTITION BY {{ primary_key }}
-            ORDER BY {{ order_by }}
+        COALESCE(
+            LEAD(CAST({{ order_by }} AS TIMESTAMP)) OVER (
+                PARTITION BY {{ primary_key }}
+                ORDER BY {{ order_by }}
+            ),
+            CAST('9999-12-31' AS TIMESTAMP)
         ) AS valid_to,
         CASE
             WHEN LEAD(CAST({{ order_by }} AS TIMESTAMP)) OVER (

@@ -3,19 +3,20 @@
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC # Test Script — Simulate Incremental "Second Run" with April 2024 Data
+# MAGIC # Test Script — Inject Synthetic April 2024 Data for Incremental Load Testing
 # MAGIC
-# MAGIC This notebook is run **after** `task3_incremental.py` completes its first full
-# MAGIC load. It follows the assignment hint:
+# MAGIC This notebook is called **inline** from `task3_incremental.py` via `%run`
+# MAGIC between Step 3 (landing append) and Step 4 (classification). It follows the
+# MAGIC assignment hint:
 # MAGIC
 # MAGIC > *"After your first full load, manually insert 2-3 records with April 2024
 # MAGIC > dates into your raw table, then run again to verify only those are processed."*
 # MAGIC
 # MAGIC **What it does:**
-# MAGIC 1. Inserts 3 synthetic rows directly into the **landing table** with April 2024
-# MAGIC    dates — simulating late-arriving or newly available API records.
-# MAGIC 2. Re-runs the incremental classification/merge logic to show the pipeline
-# MAGIC    correctly routes the new rows to raw or quarantine.
+# MAGIC Inserts 3 synthetic rows directly into the **landing table** with April 2024
+# MAGIC dates. These rows are then picked up by the pipeline's own classification step
+# MAGIC (Step 4) and routed to raw or quarantine alongside any API-fetched records.
+# MAGIC This notebook does **not** run any classification or merge logic itself.
 # MAGIC
 # MAGIC **Test rows:**
 # MAGIC - Row A — fully valid, new transaction → expected in **RAW**
@@ -26,9 +27,10 @@
 # MAGIC **This script is idempotent:** it checks whether test rows already exist in
 # MAGIC landing before inserting, so repeated runs do not accumulate duplicates.
 # MAGIC
-# MAGIC **Usage:** Uncomment `%run ./test_incremental` in `task3_incremental.py`
-# MAGIC (between Step 3 and Step 4), then run the pipeline. The pipeline will pick up
-# MAGIC these rows and route them to raw / quarantine as part of its normal flow.
+# MAGIC **Usage:** This notebook is already wired into `task3_incremental.py` via
+# MAGIC `%run ./test_incremental` (between Step 3 and Step 4). To disable it,
+# MAGIC comment out that `%run` line. The pipeline will pick up the injected rows
+# MAGIC and route them to raw / quarantine as part of its normal flow.
 
 # COMMAND ----------
 
@@ -117,7 +119,7 @@ else:
 # MAGIC %md
 # MAGIC ### Expected Outcome
 # MAGIC
-# MAGIC After the pipeline runs, the synthetic rows should be routed as follows:
+# MAGIC After Step 4+ of the pipeline completes, the synthetic rows should be routed as follows:
 # MAGIC
 # MAGIC | Row | transaction_id | Result | Reason |
 # MAGIC |-----|---------------|--------|--------|

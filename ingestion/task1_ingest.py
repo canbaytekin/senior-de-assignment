@@ -18,9 +18,19 @@
 # MAGIC %md
 # MAGIC # Task 1 — Raw Data Ingestion with Data Quality Handling
 # MAGIC
-# MAGIC This notebook fetches all transactions from a REST API (Supabase),
-# MAGIC validates each record against the schema, quarantines invalid/duplicate rows,
-# MAGIC and persists clean records into a Delta **raw/bronze** table.
+# MAGIC This notebook performs a **full ingestion** of all transactions from a REST API (Supabase).
+# MAGIC It validates each record against the schema, quarantines invalid/duplicate rows,
+# MAGIC and persists clean records into a Delta **raw/bronze** table. On each execution it:
+# MAGIC 1. Fetches **all** transaction records from the Supabase REST API (with CSV fallback).
+# MAGIC 2. **Appends** every fetched record to the **landing table** (exact source mirror + ingestion timestamp).
+# MAGIC 3. Reads the landing table, validates each record against the schema, and deduplicates.
+# MAGIC 4. **MERGEs** clean records into the raw Delta table; quarantines invalid/duplicate rows.
+# MAGIC 5. Updates the **watermark** so Task 3 (incremental) knows where to resume from.
+# MAGIC
+# MAGIC **Architecture:** API → `landing_transactions` (append) → validate/classify → `raw_transactions` + `quarantine_transactions`
+# MAGIC
+# MAGIC **Data quality:** Records are validated for required fields, format correctness, enum membership,
+# MAGIC and positive amounts. Duplicates are detected via SHA-256 natural-key hashing and routed to quarantine.
 # MAGIC
 # MAGIC **How to use:** Set the widgets / parameters in Cmd 2, then _Run All_.
 # MAGIC
@@ -76,9 +86,11 @@ except Exception as e:
 # records written in this run, ensuring they share one ingestion batch ID.
 ingestion_ts = utc_now_iso()
 
-# build_landing_dataframe (shared_utils) — converts raw API dicts into a
-# Spark DataFrame matching LANDING_SCHEMA (all strings, no validation).
-df_landing = build_landing_dataframe(raw_records, ingestion_ts)
+# build_dataframe (shared_utils) — converts raw API dicts into a Spark
+# DataFrame matching LANDING_SCHEMA (all strings, no validation).
+for r in raw_records:
+    r["ingestion_timestamp"] = ingestion_ts
+df_landing = build_dataframe(raw_records, LANDING_SCHEMA, _landing_row)
 
 # Append to landing table (created by ensure_tables_exist via DDL).
 write_delta_table(df_landing, LANDING_TABLE, mode="append")
@@ -183,6 +195,7 @@ log.info("=" * 60)
 
 # MAGIC %md
 # MAGIC ### Quick look at the tables
+# MAGIC Inspect a sample of the raw (bronze) table and the full quarantine table below.
 
 # COMMAND ----------
 
@@ -213,3 +226,40 @@ display(spark.sql(f"SELECT * FROM workspace.bronze.quarantine_transactions"))
 # MAGIC Supabase-generated `id`). The **first** occurrence is kept; subsequent matches are routed to quarantine
 # MAGIC with `error_reason = duplicate_of:<original_txn_id>`. This approach is chosen over an `is_duplicate`
 # MAGIC flag to keep the raw table clean and free of known-bad data.
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ### Landing Layer, Watermark & Pipeline Architecture
+# MAGIC
+# MAGIC **Landing layer:** All records fetched from the API are first appended to
+# MAGIC `bronze_landing.transactions` — an exact mirror of the source with only an
+# MAGIC `ingestion_timestamp` added. No rows are filtered or modified. This provides
+# MAGIC a full audit trail and allows reprocessing from source if needed.
+# MAGIC
+# MAGIC **Classification flow:** After writing to the landing table, the pipeline reads
+# MAGIC all landing rows, validates each record against the schema, detects duplicates
+# MAGIC via SHA-256 natural-key hashing (cross-run and in-batch), and splits results
+# MAGIC into clean records (→ raw table via MERGE) and quarantine records (→ append).
+# MAGIC
+# MAGIC **Watermark:** After ingestion, the pipeline records the maximum `transaction_date`
+# MAGIC from the clean batch into a single-row Delta table (`default.ingestion_watermark`).
+# MAGIC This leverages Delta's ACID guarantees and allows Task 3 (incremental) to resume
+# MAGIC from the correct point without re-processing the full dataset.
+# MAGIC
+# MAGIC **Edge cases:**
+# MAGIC - **API failure:** If the API is unreachable, the pipeline falls back to a local CSV
+# MAGIC   file (`CSV_FALLBACK_PATH`) to ensure the pipeline can still run.
+# MAGIC - **Empty result set:** If the API returns 0 records, a `RuntimeError` is raised
+# MAGIC   (or the CSV fallback is used) — the pipeline never silently writes 0 rows.
+# MAGIC - **Re-runs:** Because of the MERGE-on-`natural_key_hash` strategy, re-running
+# MAGIC   this notebook is safe — existing rows won't be duplicated.
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ### Quick look at the watermark table
+
+# COMMAND ----------
+
+display(spark.sql(f"SELECT * FROM workspace.default.ingestion_watermark"))

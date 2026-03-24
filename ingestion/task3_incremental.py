@@ -24,7 +24,7 @@
 # MAGIC **Watermark store:** A single-row Delta table (`default.ingestion_watermark`).
 # MAGIC This is simple, durable, and queryable — no external dependency needed.
 # MAGIC
-# MAGIC **Late-arriving data:** A configurable lookback window (default 2 days) is subtracted
+# MAGIC **Late-arriving data:** A configurable lookback window (default 30 days) is subtracted
 # MAGIC from the watermark before querying the API. This ensures records that arrive with a
 # MAGIC `transaction_date` slightly behind the watermark are still captured. The MERGE
 # MAGIC operation prevents true duplicates from being inserted.
@@ -39,7 +39,7 @@
 #  CONFIGURATION — loaded from shared_utils; override here if needed           #
 # --------------------------------------------------------------------------- #
 # All API settings and table names are defined in shared_utils.
-# LOOKBACK_DAYS is also defined there (default 2).
+# LOOKBACK_DAYS is also defined there (default 30).
 
 # Ensure all schemas and Delta tables exist (idempotent — reads raw_table_ddl.sql).
 ensure_tables_exist()
@@ -73,21 +73,24 @@ else:
 
 # fetch_records (shared_utils) — paginates the API; when from_date is set it
 # adds a gte. filter so only records newer than the lookback date are returned.
-raw_records = fetch_records(
-    API_BASE_URL, API_ENDPOINT, API_KEY, PAGE_SIZE,
-    ORDER_COLUMN, ORDER_DIR, from_date=fetch_from
-)
+try:
+    raw_records = fetch_records(
+        API_BASE_URL, API_ENDPOINT, API_KEY, PAGE_SIZE,
+        ORDER_COLUMN, ORDER_DIR, from_date=fetch_from
+    )
+    if not raw_records:
+        raise RuntimeError("API returned 0 records")
+except Exception as e:
+    if CSV_FALLBACK_PATH:
+        log.warning("API fetch failed (%s); falling back to CSV: %s", e, CSV_FALLBACK_PATH)
+        # load_from_csv (shared_utils) — reads a CSV into Spark and converts
+        # rows to dicts, used as a fallback when the API is unreachable.
+        raw_records = load_from_csv(CSV_FALLBACK_PATH)
+    else:
+        raise
 
 if not raw_records:
     log.info("STEP 2 | No new records since last run. Pipeline complete.")
-    # save_watermark (shared_utils) — persist unchanged watermark with 0
-    # records so monitoring can see the run executed but found nothing new.
-    save_watermark(
-        WATERMARK_TABLE,
-        current_watermark or "1970-01-01T00:00:00Z",
-        utc_now_iso(),
-        0
-    )
     dbutils.notebook.exit("No new records")
 
 # COMMAND ----------
@@ -100,8 +103,10 @@ if not raw_records:
 ingestion_ts = utc_now_iso()
 
 if raw_records:
-    # build_landing_dataframe (shared_utils) — maps API dicts to LANDING_SCHEMA.
-    df_landing = build_landing_dataframe(raw_records, ingestion_ts)
+    # build_dataframe (shared_utils) — maps API dicts to LANDING_SCHEMA.
+    for r in raw_records:
+        r["ingestion_timestamp"] = ingestion_ts
+    df_landing = build_dataframe(raw_records, LANDING_SCHEMA, _landing_row)
 
     # write_delta_table (shared_utils) — mode="append" preserves previous
     # landing rows so the table acts as a full audit trail of every API fetch.
@@ -112,9 +117,9 @@ if raw_records:
 
 # DBTITLE 1,Cell 9
 # --------------------------------------------------------------------------- #
-#  ⚠️  TEST INCREMENTAL LOAD — Uncomment the line below to inject synthetic    #
-#  test rows (April 2024 dates) into the landing table before classification.  #
-#  This simulates a "second run" scenario. See test_incremental.py for details.#
+#  ⚠️  TEST INCREMENTAL LOAD — The cell below injects synthetic test rows      #
+#  (April 2024 dates) into the landing table before classification (Step 4).   #
+#  Comment out the %run line to disable. See test_incremental.py for details.  #
 # --------------------------------------------------------------------------- #
 
 # COMMAND ----------

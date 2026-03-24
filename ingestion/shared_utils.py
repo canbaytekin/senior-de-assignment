@@ -27,10 +27,11 @@
 # --------------------------------------------------------------------------- #
 import logging
 import os
-import requests
-import time
 import re
 import hashlib
+import time
+import requests
+import pandas as pd
 from datetime import datetime, timezone, timedelta
 from pyspark.sql import SparkSession
 from pyspark.sql.types import (
@@ -101,9 +102,14 @@ if not log.handlers:
 #  PIPELINE CONFIGURATION — shared across Task 1 & Task 3                      #
 # --------------------------------------------------------------------------- #
 
-API_BASE_URL     = os.environ.get("API_BASE_URL", "https://fgbjekjqnbmtkmeewexb.supabase.co/rest/v1")
-API_ENDPOINT     = os.environ.get("API_ENDPOINT", "/transactions")
-API_KEY          = os.environ.get("SUPABASE_API_KEY", "sb_publishable_W2MbiakvFFthMHtlrzSkQw_URTiUI6G")
+API_BASE_URL     = os.environ.get("API_BASE_URL")
+API_ENDPOINT     = os.environ.get("API_ENDPOINT")
+API_KEY          = os.environ.get("SUPABASE_API_KEY")
+
+_missing = [k for k, v in {"API_BASE_URL": API_BASE_URL, "API_ENDPOINT": API_ENDPOINT, "SUPABASE_API_KEY": API_KEY}.items() if not v]
+if _missing:
+    raise EnvironmentError(f"Missing required environment variables: {', '.join(_missing)}. "
+                           "Set them via .env file, cluster env vars, or Databricks secrets.")
 PAGE_SIZE        = 100
 ORDER_COLUMN     = "transaction_date"
 ORDER_DIR        = "asc"
@@ -113,8 +119,14 @@ RAW_TABLE        = "workspace.bronze.transactions"
 QUARANTINE_TABLE = "workspace.bronze.quarantine_transactions"
 WATERMARK_TABLE  = "workspace.default.ingestion_watermark"
 
-CSV_FALLBACK_PATH = None     # e.g. "/dbfs/FileStore/transactions.csv"
-LOOKBACK_DAYS     = 2
+# Resolve CSV fallback path relative to the repo root (one level above ingestion/).
+# Works in Databricks Repos: _THIS_DIR = .../ingestion, CSV lives at ../transactions.csv
+# Override via env var CSV_FALLBACK_PATH or leave as None to disable the fallback.
+CSV_FALLBACK_PATH = os.environ.get(
+    "CSV_FALLBACK_PATH",
+    os.path.join(os.path.dirname(_THIS_DIR), "transactions.csv") if _THIS_DIR else None,
+)
+LOOKBACK_DAYS     = 30
 
 # COMMAND ----------
 
@@ -191,11 +203,17 @@ def compute_natural_key_hash(rec):
 # Only RAW_SCHEMA includes natural_key_hash. It is intentionally absent from
 # QUARANTINE_SCHEMA and LANDING_SCHEMA because:
 #   - Landing is a pre-validation mirror of the API response; computing a hash
-#     before validation would be premature and misleading.
+#     before validation would be misleading.
 #   - Quarantine holds invalid records whose natural-key fields may be missing,
 #     corrupt, or wrongly typed, so a reliable hash cannot be guaranteed.
 #   - The hash is only needed for MERGE-based dedup in the raw table (Task 3)
 #     and in-memory duplicate detection during classify_records().
+
+# StructField("column_name", DataType(), nullable)
+#   column_name — name of the column in the DataFrame
+#   DataType()  — Spark data type (e.g. StringType, IntegerType, DoubleType)
+#   nullable    — True: column accepts NULL values | False: column is required (NOT NULL)
+# LANDING_SCHEMA fields are excepting NULL because the landing table is a direct mirror of the API response, and we want to capture all records even if they have missing fields. Validation and error handling will be done in the subsequent classify_records() step, which moves records to raw or quarantine tables based on their validity.
 
 RAW_SCHEMA = StructType([
     StructField("id", IntegerType(), True),
@@ -317,9 +335,18 @@ def fetch_records(base_url, endpoint, api_key, page_size,
 
 
 def load_from_csv(path):
-    """Fallback: load records from a CSV file on DBFS/local."""
-    df = spark.read.option("header", True).option("inferSchema", True).csv(path)
-    records = [row.asDict() for row in df.collect()]
+    """Fallback: load records from a CSV file.
+
+    Handles two path styles:
+    - DBFS paths (starts with 'dbfs:/') — read via Spark.
+    - Local / Workspace paths (e.g. /Workspace/Repos/...) — read via pandas,
+      which works for files committed to Databricks Repos without needing DBFS.
+    """
+    if path.startswith("dbfs:/"):
+        df = spark.read.option("header", True).option("inferSchema", True).csv(path)
+        records = [row.asDict() for row in df.collect()]
+    else:
+        records = pd.read_csv(path).to_dict(orient="records")
     log.info("Total records loaded from CSV: %d", len(records))
     return records
 
@@ -342,7 +369,7 @@ def _parse_iso8601(dt_string):
     # Must contain a 'T' separator
     if "T" not in normalised:
         return None
-    # Strict ISO 8601: only %Y-%m-%dT%H:%M:%SZ — no fractional seconds
+    # Strict ISO 8601: only %Y-%m-%dT%H:%M:%SZ — no fractional seconds or Non-UTC timezone offsets
     try:
         return datetime.strptime(normalised, "%Y-%m-%dT%H:%M:%SZ")
     except ValueError:
@@ -369,9 +396,9 @@ def validate_record(rec):
     if errors:
         return errors
 
-    # ---- transaction_id format (matches JSON schema: ^TXN-[A-Z0-9]+$) ----
+    # ---- transaction_id format: TXN-NNNN (exactly 4 digits) ----
     tid = str(rec["transaction_id"])
-    if not re.match(r"^TXN-[A-Z0-9]+$", tid):
+    if not re.match(r"^TXN-\d{4}$", tid):
         errors.append(f"invalid_transaction_id:{tid}")
 
     # ---- account_id format ----
@@ -445,8 +472,17 @@ def compute_new_watermark_max(deduped_records, current_watermark=None):
     return current_watermark or "1970-01-01T00:00:00Z"
 
 
-def _build_dataframe(records, schema, row_mapper):
-    """Generic helper: convert record dicts to a Spark DataFrame via row_mapper."""
+def build_dataframe(records, schema, row_mapper):
+    """
+    Convert a list of record dicts to a Spark DataFrame.
+
+    Args:
+        records    — list of dicts (raw API records or classified records)
+        schema     — StructType defining the target table shape
+                     (LANDING_SCHEMA, RAW_SCHEMA, or QUARANTINE_SCHEMA)
+        row_mapper — function that converts one dict to a tuple matching schema
+                     (_landing_row, _raw_row, or _quarantine_row)
+    """
     if not records:
         return spark.createDataFrame([], schema=schema)
     rows = [row_mapper(r) for r in records]
@@ -506,14 +542,6 @@ def _quarantine_row(q):
     )
 
 
-def build_landing_dataframe(records, ingestion_ts):
-    """Convert raw API records to a Spark DataFrame for the landing table (no validation)."""
-    # Inject ingestion_timestamp before mapping
-    for r in records:
-        r["ingestion_timestamp"] = ingestion_ts
-    return _build_dataframe(records, LANDING_SCHEMA, _landing_row)
-
-
 def get_max_processed_ingestion_ts(raw_table, quarantine_table):
     """
     Return the maximum ingestion_timestamp across the raw and quarantine tables.
@@ -549,16 +577,6 @@ def landing_records_to_dicts(landing_df):
     return records
 
 
-def build_raw_dataframe(deduped_records):
-    """Convert a list of validated record dicts to a Spark DataFrame."""
-    return _build_dataframe(deduped_records, RAW_SCHEMA, _raw_row)
-
-
-def build_quarantine_dataframe(quarantine_records):
-    """Convert a list of quarantine record dicts to a Spark DataFrame."""
-    return _build_dataframe(quarantine_records, QUARANTINE_SCHEMA, _quarantine_row)
-
-
 def collect_existing_keys(raw_table):
     """Return a set of natural_key_hash values already in the raw table."""
     existing_keys = set()
@@ -570,7 +588,7 @@ def collect_existing_keys(raw_table):
 
 def merge_into_raw(deduped_records, raw_table):
     """Build a DataFrame from deduped records and MERGE into the raw Delta table."""
-    df = build_raw_dataframe(deduped_records)
+    df = build_dataframe(deduped_records, RAW_SCHEMA, _raw_row)
     delta_tbl = DeltaTable.forName(spark, raw_table)
     (
         delta_tbl.alias("tgt")
@@ -583,7 +601,7 @@ def merge_into_raw(deduped_records, raw_table):
 
 def append_quarantine(quarantine_records, quarantine_table):
     """Build a DataFrame from quarantine records and append to the quarantine table."""
-    df = build_quarantine_dataframe(quarantine_records)
+    df = build_dataframe(quarantine_records, QUARANTINE_SCHEMA, _quarantine_row)
     write_delta_table(df, quarantine_table, mode="append")
     return df.count()
 
