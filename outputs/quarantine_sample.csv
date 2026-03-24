@@ -1,0 +1,138 @@
+id,transaction_id,account_id,transaction_date,amount,currency,transaction_type,merchant_name,merchant_category,status,country_code,error_reason,ingestion_timestamp
+648,TXN-0346,ACC-1014,2024-04-15 09:30:00,-127.5,USD,debit,   ,groceries,Completed,US,invalid_transaction_date:2024-04-15 09:30:00; non_positive_amount:-127.5; blank_merchant_name; invalid_status:Completed,2026-03-24T14:08:58Z
+579,TXN-0345,ACC-1007,2024-11-31T14:22:00Z,67.4,GBP,debit,McDonald's,fast_food,completed,UK,invalid_transaction_date:2024-11-31T14:22:00Z; invalid_merchant_category:fast_food; invalid_country_code:UK,2026-03-24T14:08:58Z
+null,TXN-9902,ACC-1002,2024-04-10T14:00:00Z,-999.99,INVALID_CUR,debit,BadMerchant,retail,completed,US,non_positive_amount:-999.99; invalid_currency:INVALID_CUR,2026-03-24T14:08:58Z
+582,TXN-0228,ACC-1019,2024-03-01T08:58:08Z,61.32,USD,debit,Rewe,groceries,completed,DE,duplicate_of:existing_record,2026-03-24T14:08:58Z
+381,TXN-0034,ACC-1008,2024-03-02T02:05:01Z,102.71,EUR,debit,AMC Theaters,entertainment,completed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+525,TXN-0191,ACC-1006,2024-03-03T00:01:55Z,1119.79,GBP,debit,Samsung,electronics,completed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+555,TXN-0027,ACC-1006,2024-03-03T01:07:24Z,76.28,USD,debit,Bupa,health,completed,GB,duplicate_of:existing_record,2026-03-24T14:08:58Z
+622,TXN-0245,ACC-1018,2024-03-03T06:45:27Z,766.71,USD,debit,Shell Gas,transportation,completed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+676,TXN-0098,ACC-1013,2024-03-03T15:54:25Z,88.04,CAD,debit,eBay,e-commerce,completed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+501,TXN-0085,ACC-1019,2024-03-04T15:11:00Z,271.0,GBP,debit,Walgreens,health,completed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+510,TXN-0313,ACC-1010,2024-03-04T16:39:14Z,144.97,GBP,debit,Zalando,e-commerce,completed,DE,duplicate_of:existing_record,2026-03-24T14:08:58Z
+437,TXN-0178,ACC-1020,2024-03-04T16:44:23Z,345.74,EUR,debit,IKEA,retail,completed,GB,duplicate_of:existing_record,2026-03-24T14:08:58Z
+588,TXN-0350,ACC-1020,2024-03-04T16:44:23Z,345.74,EUR,debit,IKEA,retail,completed,GB,duplicate_of:existing_record,2026-03-24T14:08:58Z
+379,TXN-0349,ACC-1003,2024-03-04T21:17:09Z,593.75,GBP,debit,Spotify,entertainment,failed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+530,TXN-0319,ACC-1003,2024-03-04T21:17:09Z,593.75,GBP,debit,Spotify,entertainment,failed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+519,TXN-0341,ACC-1017,2024-03-04T21:54:57Z,952.74,JPY,debit,Uber,transportation,completed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+498,TXN-0005,ACC-1014,2024-03-05T04:03:07Z,118.62,USD,debit,Deliveroo,food_and_beverage,completed,GB,duplicate_of:existing_record,2026-03-24T14:08:58Z
+542,TXN-0039,ACC-1008,2024-03-05T07:18:08Z,6749.93,AUD,credit,Zalando,e-commerce,completed,DE,duplicate_of:existing_record,2026-03-24T14:08:58Z
+578,TXN-0299,ACC-1005,2024-03-05T07:42:09Z,1048.47,JPY,debit,Sony Electronics,electronics,reversed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+602,TXN-0172,ACC-1020,2024-03-05T09:17:35Z,673.1,AUD,debit,Deliveroo,food_and_beverage,completed,GB,duplicate_of:existing_record,2026-03-24T14:08:58Z
+687,TXN-0316,ACC-1014,2024-03-05T14:38:41Z,125.17,USD,debit,United Airlines,travel,completed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+444,TXN-0022,ACC-1017,2024-03-06T00:21:27Z,72.82,GBP,debit,ASOS,e-commerce,completed,GB,duplicate_of:existing_record,2026-03-24T14:08:58Z
+662,TXN-0217,ACC-1020,2024-03-06T04:38:44Z,4662.11,USD,debit,Netflix,entertainment,pending,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+350,TXN-0021,ACC-1006,2024-03-06T19:55:50Z,92.42,GBP,debit,Airbnb,travel,pending,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+403,TXN-0198,ACC-1016,2024-03-07T05:34:34Z,7526.67,EUR,credit,Boots,health,completed,GB,duplicate_of:existing_record,2026-03-24T14:08:58Z
+695,TXN-0096,ACC-1012,2024-03-07T08:53:49Z,112.3,EUR,debit,Freelance Income,payroll,completed,NL,duplicate_of:existing_record,2026-03-24T14:08:58Z
+591,TXN-0048,ACC-1011,2024-03-07T13:35:33Z,3707.42,USD,credit,Zalando,e-commerce,completed,DE,duplicate_of:existing_record,2026-03-24T14:08:58Z
+482,TXN-0216,ACC-1003,2024-03-08T03:41:46Z,449.85,USD,debit,United Airlines,travel,completed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+466,TXN-0343,ACC-1019,2024-03-08T05:10:30Z,650.01,USD,debit,ACH Payroll,payroll,completed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+401,TXN-0289,ACC-1001,2024-03-08T11:14:29Z,150.71,EUR,debit,Lyft,transportation,completed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+463,TXN-0303,ACC-1005,2024-03-08T12:31:19Z,7018.9,EUR,credit,McDonald's,food_and_beverage,pending,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+426,TXN-0327,ACC-1018,2024-03-08T17:51:18Z,3205.28,USD,debit,Best Buy,electronics,completed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+392,TXN-0278,ACC-1019,2024-03-08T20:31:48Z,7709.12,EUR,credit,Wire Transfer,transfer,completed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+546,TXN-0032,ACC-1016,2024-03-08T23:22:41Z,129.83,JPY,debit,Wise,transfer,completed,GB,duplicate_of:existing_record,2026-03-24T14:08:58Z
+455,TXN-0157,ACC-1014,2024-03-09T03:48:15Z,692.81,EUR,debit,Freelance Income,payroll,pending,NL,duplicate_of:existing_record,2026-03-24T14:08:58Z
+468,TXN-0210,ACC-1019,2024-03-09T06:17:22Z,74.5,CAD,debit,Uber Eats,food_and_beverage,completed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+567,TXN-0225,ACC-1003,2024-03-09T08:37:28Z,6741.72,USD,credit,Freelance Income,payroll,completed,NL,duplicate_of:existing_record,2026-03-24T14:08:58Z
+454,TXN-0263,ACC-1010,2024-03-09T08:48:38Z,3664.3,EUR,debit,Netflix,entertainment,completed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+523,TXN-0240,ACC-1001,2024-03-09T23:08:03Z,759.76,CHF,debit,IKEA,home_and_garden,completed,NL,duplicate_of:existing_record,2026-03-24T14:08:58Z
+496,TXN-0301,ACC-1020,2024-03-09T23:40:43Z,6.48,AUD,debit,United Airlines,travel,completed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+435,TXN-0189,ACC-1016,2024-03-10T00:40:23Z,86.03,EUR,debit,Uber,transportation,reversed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+557,TXN-0126,ACC-1015,2024-03-10T04:31:40Z,16.56,EUR,debit,Waitrose,groceries,completed,GB,duplicate_of:existing_record,2026-03-24T14:08:58Z
+495,TXN-0302,ACC-1009,2024-03-10T08:39:32Z,292.36,EUR,debit,Starbucks,food_and_beverage,reversed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+512,TXN-0320,ACC-1005,2024-03-10T22:06:25Z,4955.16,USD,debit,Best Buy,electronics,completed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+693,TXN-0324,ACC-1009,2024-03-11T01:47:21Z,735.97,GBP,debit,Bunnings,home_and_garden,completed,AU,duplicate_of:existing_record,2026-03-24T14:08:58Z
+659,TXN-0260,ACC-1006,2024-03-11T19:07:39Z,3295.08,USD,debit,Macy's,retail,completed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+698,TXN-0014,ACC-1002,2024-03-11T20:58:05Z,3010.05,EUR,credit,Waitrose,groceries,completed,GB,duplicate_of:existing_record,2026-03-24T14:08:58Z
+610,TXN-0261,ACC-1010,2024-03-11T22:28:03Z,317.7,USD,credit,Shell Gas,transportation,completed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+688,TXN-0192,ACC-1008,2024-03-12T09:38:34Z,6101.8,USD,credit,ACH Transfer,transfer,completed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+639,TXN-0051,ACC-1018,2024-03-12T18:50:05Z,325.01,USD,debit,Bunnings,home_and_garden,failed,AU,duplicate_of:existing_record,2026-03-24T14:08:58Z
+412,TXN-0247,ACC-1002,2024-03-13T05:20:18Z,142.32,USD,debit,Employer Payroll,payroll,completed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+547,TXN-0256,ACC-1002,2024-03-13T08:44:57Z,33.09,USD,debit,Uber,transportation,completed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+575,TXN-0100,ACC-1019,2024-03-13T17:56:41Z,2851.16,EUR,credit,United Airlines,travel,completed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+636,TXN-0064,ACC-1005,2024-03-14T13:43:11Z,44.39,EUR,debit,Booking.com,travel,completed,NL,duplicate_of:existing_record,2026-03-24T14:08:58Z
+701,TXN-0266,ACC-1014,2024-03-14T17:52:18Z,4659.69,AUD,debit,IKEA,retail,completed,GB,duplicate_of:existing_record,2026-03-24T14:08:58Z
+679,TXN-0227,ACC-1018,2024-03-14T19:24:53Z,65.86,EUR,debit,Sony Electronics,electronics,completed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+589,TXN-0188,ACC-1001,2024-03-14T20:04:37Z,7245.05,EUR,credit,Sony Electronics,electronics,reversed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+509,TXN-0095,ACC-1009,2024-03-14T21:15:03Z,544.28,USD,debit,ACH Transfer,transfer,pending,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+545,TXN-0233,ACC-1001,2024-03-14T21:22:50Z,4568.75,CAD,debit,Deliveroo,food_and_beverage,completed,GB,duplicate_of:existing_record,2026-03-24T14:08:58Z
+377,TXN-0053,ACC-1018,2024-03-14T22:25:09Z,148.46,EUR,debit,Costa Coffee,food_and_beverage,completed,GB,duplicate_of:existing_record,2026-03-24T14:08:58Z
+635,TXN-0080,ACC-1006,2024-03-15T11:05:17Z,3826.12,EUR,credit,McDonald's,food_and_beverage,completed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+450,TXN-0134,ACC-1018,2024-03-15T14:12:18Z,1085.37,EUR,debit,Apple Store,electronics,completed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+398,TXN-0323,ACC-1015,2024-03-16T13:42:53Z,745.49,CAD,debit,Gym Membership,health,completed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+416,TXN-0049,ACC-1006,2024-03-16T13:45:16Z,5997.14,USD,credit,Amazon,e-commerce,pending,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+386,TXN-0239,ACC-1014,2024-03-16T16:22:19Z,151.88,GBP,debit,BACS Credit,payroll,completed,GB,duplicate_of:existing_record,2026-03-24T14:08:58Z
+601,TXN-0220,ACC-1014,2024-03-17T00:36:41Z,706.54,USD,debit,Booking.com,travel,completed,NL,duplicate_of:existing_record,2026-03-24T14:08:58Z
+600,TXN-0190,ACC-1015,2024-03-17T06:33:55Z,4710.14,EUR,debit,Whole Foods,groceries,failed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+595,TXN-0171,ACC-1004,2024-03-17T10:29:17Z,52.33,USD,debit,Apple Store,electronics,pending,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+658,TXN-0180,ACC-1011,2024-03-17T14:55:04Z,28.47,USD,debit,Sony Electronics,electronics,completed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+521,TXN-0351,ACC-1011,2024-03-17T14:55:04Z,28.47,USD,debit,Sony Electronics,electronics,completed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+502,TXN-0088,ACC-1008,2024-03-17T15:19:21Z,4663.08,USD,credit,McDonald's,food_and_beverage,completed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+629,TXN-0046,ACC-1002,2024-03-17T18:03:49Z,356.87,USD,debit,Costa Coffee,food_and_beverage,reversed,GB,duplicate_of:existing_record,2026-03-24T14:08:58Z
+533,TXN-0213,ACC-1019,2024-03-17T22:18:23Z,146.49,USD,debit,Lyft,transportation,completed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+409,TXN-0202,ACC-1020,2024-03-17T23:25:07Z,2165.0,EUR,debit,Zalando,e-commerce,completed,DE,duplicate_of:existing_record,2026-03-24T14:08:58Z
+638,TXN-0008,ACC-1019,2024-03-18T07:28:30Z,6207.84,USD,credit,Best Buy,electronics,completed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+526,TXN-0122,ACC-1004,2024-03-18T09:44:53Z,229.71,USD,debit,Samsung,electronics,completed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+503,TXN-0250,ACC-1005,2024-03-18T10:11:25Z,4583.15,EUR,credit,Sony Electronics,electronics,completed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+507,TXN-0336,ACC-1017,2024-03-18T10:20:02Z,3739.17,USD,credit,BACS Credit,payroll,pending,GB,duplicate_of:existing_record,2026-03-24T14:08:58Z
+603,TXN-0144,ACC-1018,2024-03-18T14:14:16Z,58.56,EUR,debit,Employer Payroll,payroll,completed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+369,TXN-0072,ACC-1004,2024-03-18T14:31:55Z,51.02,GBP,debit,Tesco,groceries,reversed,GB,duplicate_of:existing_record,2026-03-24T14:08:58Z
+361,TXN-0077,ACC-1007,2024-03-19T04:40:57Z,3771.78,AUD,debit,Costa Coffee,food_and_beverage,completed,GB,duplicate_of:existing_record,2026-03-24T14:08:58Z
+428,TXN-0326,ACC-1013,2024-03-19T08:11:51Z,35.25,GBP,debit,Samsung,electronics,completed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+370,TXN-0138,ACC-1004,2024-03-19T23:58:39Z,92.43,USD,debit,ACH Payroll,payroll,completed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+352,TXN-0340,ACC-1005,2024-03-19T23:59:30Z,3570.69,EUR,credit,Amazon,e-commerce,completed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+421,TXN-0206,ACC-1007,2024-03-20T13:27:18Z,385.06,USD,debit,MediaMarkt,electronics,pending,DE,duplicate_of:existing_record,2026-03-24T14:08:58Z
+505,TXN-0164,ACC-1006,2024-03-20T16:28:57Z,6997.75,CAD,credit,Rewe,groceries,completed,DE,duplicate_of:existing_record,2026-03-24T14:08:58Z
+374,TXN-0334,ACC-1017,2024-03-20T19:17:10Z,29.22,EUR,debit,Amazon,e-commerce,completed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+382,TXN-0238,ACC-1004,2024-03-20T22:26:43Z,4473.06,USD,credit,Zalando,e-commerce,failed,DE,duplicate_of:existing_record,2026-03-24T14:08:58Z
+538,TXN-0057,ACC-1010,2024-03-21T02:04:03Z,6.1,USD,debit,Shell Gas,transportation,completed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+607,TXN-0150,ACC-1003,2024-03-21T11:16:07Z,4336.9,USD,debit,Zalando,e-commerce,completed,DE,duplicate_of:existing_record,2026-03-24T14:08:58Z
+614,TXN-0111,ACC-1013,2024-03-22T12:31:01Z,6348.71,USD,credit,IKEA,home_and_garden,reversed,NL,duplicate_of:existing_record,2026-03-24T14:08:58Z
+683,TXN-0076,ACC-1012,2024-03-23T03:14:14Z,630.19,USD,debit,Boots,health,completed,GB,duplicate_of:existing_record,2026-03-24T14:08:58Z
+448,TXN-0315,ACC-1005,2024-03-23T04:30:35Z,24.53,USD,debit,Zalando,e-commerce,completed,DE,duplicate_of:existing_record,2026-03-24T14:08:58Z
+634,TXN-0203,ACC-1011,2024-03-23T07:26:54Z,1913.2,USD,credit,TfL Oyster,transportation,pending,GB,duplicate_of:existing_record,2026-03-24T14:08:58Z
+485,TXN-0322,ACC-1012,2024-03-23T08:46:27Z,5380.84,USD,credit,Whole Foods,groceries,completed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+632,TXN-0317,ACC-1017,2024-03-23T12:59:38Z,4154.58,USD,credit,IKEA,retail,completed,GB,duplicate_of:existing_record,2026-03-24T14:08:58Z
+663,TXN-0329,ACC-1004,2024-03-23T20:40:45Z,856.89,USD,debit,IKEA,retail,completed,GB,duplicate_of:existing_record,2026-03-24T14:08:58Z
+367,TXN-0183,ACC-1005,2024-03-23T22:38:09Z,650.78,USD,debit,Rewe,groceries,completed,DE,duplicate_of:existing_record,2026-03-24T14:08:58Z
+490,TXN-0128,ACC-1018,2024-03-24T10:33:27Z,380.97,EUR,debit,Wire Transfer,transfer,completed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+678,TXN-0117,ACC-1005,2024-03-24T11:58:14Z,2323.05,USD,credit,Xbox Game Pass,entertainment,completed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+583,TXN-0211,ACC-1003,2024-03-24T16:15:04Z,5858.31,USD,credit,Samsung,electronics,completed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+643,TXN-0082,ACC-1005,2024-03-24T18:19:28Z,171.25,USD,debit,MediaMarkt,electronics,completed,DE,duplicate_of:existing_record,2026-03-24T14:08:58Z
+576,TXN-0013,ACC-1006,2024-03-24T18:41:57Z,5073.34,USD,credit,Home Depot,home_and_garden,completed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+650,TXN-0024,ACC-1006,2024-03-24T22:33:57Z,181.06,EUR,debit,Shell Gas,transportation,completed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+402,TXN-0297,ACC-1010,2024-03-25T02:28:06Z,522.02,GBP,credit,B&Q,home_and_garden,completed,GB,duplicate_of:existing_record,2026-03-24T14:08:58Z
+385,TXN-0193,ACC-1013,2024-03-25T02:51:16Z,181.26,USD,debit,Boots,health,completed,GB,duplicate_of:existing_record,2026-03-24T14:08:58Z
+406,TXN-0038,ACC-1018,2024-03-25T06:46:03Z,27.96,EUR,debit,BACS Credit,payroll,completed,GB,duplicate_of:existing_record,2026-03-24T14:08:58Z
+389,TXN-0337,ACC-1006,2024-03-25T10:31:58Z,680.31,EUR,debit,Samsung,electronics,completed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+692,TXN-0249,ACC-1003,2024-03-26T04:09:21Z,4083.02,USD,credit,Bunnings,home_and_garden,completed,AU,duplicate_of:existing_record,2026-03-24T14:08:58Z
+453,TXN-0195,ACC-1011,2024-03-26T07:24:10Z,2100.42,EUR,credit,Starbucks,food_and_beverage,completed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+681,TXN-0078,ACC-1005,2024-03-26T07:26:08Z,829.75,USD,debit,Lufthansa,travel,completed,DE,duplicate_of:existing_record,2026-03-24T14:08:58Z
+414,TXN-0246,ACC-1015,2024-03-27T00:18:59Z,4920.43,CAD,debit,United Airlines,travel,completed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+457,TXN-0284,ACC-1005,2024-03-27T01:27:29Z,7232.54,EUR,credit,TfL Oyster,transportation,completed,GB,duplicate_of:existing_record,2026-03-24T14:08:58Z
+527,TXN-0147,ACC-1013,2024-03-27T19:33:07Z,2154.28,CHF,credit,Uber,transportation,reversed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+400,TXN-0229,ACC-1017,2024-03-28T03:48:24Z,226.9,EUR,debit,CVS Pharmacy,health,completed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+653,TXN-0026,ACC-1005,2024-03-28T20:54:09Z,3759.32,USD,credit,Rewe,groceries,completed,DE,duplicate_of:existing_record,2026-03-24T14:08:58Z
+351,TXN-0267,ACC-1006,2024-03-29T00:18:40Z,4859.77,USD,debit,Hilton Hotels,travel,completed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+447,TXN-0344,ACC-1006,2024-03-29T04:48:09Z,22.64,EUR,debit,Trader Joe's,groceries,completed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+625,TXN-0274,ACC-1008,2024-03-29T06:49:42Z,3053.02,AUD,credit,Leroy Merlin,home_and_garden,completed,FR,duplicate_of:existing_record,2026-03-24T14:08:58Z
+565,TXN-0166,ACC-1001,2024-03-29T08:28:35Z,136.43,USD,debit,MediaMarkt,electronics,completed,DE,duplicate_of:existing_record,2026-03-24T14:08:58Z
+434,TXN-0222,ACC-1013,2024-03-29T22:25:59Z,58.66,GBP,debit,Amazon,e-commerce,completed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+605,TXN-0264,ACC-1012,2024-03-30T06:18:15Z,123.55,USD,debit,eBay,e-commerce,completed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+452,TXN-0179,ACC-1010,2024-03-30T08:56:24Z,59.38,EUR,debit,Costa Coffee,food_and_beverage,completed,GB,duplicate_of:existing_record,2026-03-24T14:08:58Z
+380,TXN-0109,ACC-1005,2024-03-30T12:15:00Z,2763.53,EUR,credit,Apple Store,electronics,completed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+606,TXN-0130,ACC-1015,2024-03-30T12:20:38Z,68.43,GBP,debit,Waitrose,groceries,failed,GB,duplicate_of:existing_record,2026-03-24T14:08:58Z
+522,TXN-0017,ACC-1016,2024-03-30T14:20:49Z,3137.34,GBP,credit,Rakuten,e-commerce,completed,JP,duplicate_of:existing_record,2026-03-24T14:08:58Z
+362,TXN-0007,ACC-1011,2024-03-30T16:40:14Z,6028.33,GBP,credit,Lufthansa,travel,completed,DE,duplicate_of:existing_record,2026-03-24T14:08:58Z
+543,TXN-0300,ACC-1005,2024-03-30T18:22:07Z,491.19,CAD,debit,Hilton Hotels,travel,completed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+637,TXN-0252,ACC-1017,2024-03-30T21:01:36Z,73.75,GBP,debit,CVS Pharmacy,health,failed,US,duplicate_of:existing_record,2026-03-24T14:08:58Z
+492,TXN-0347,ACC-1003,2024-02-20T17:45:00Z,0.0,EUR,Credit,Deutsche Bank,Finance,completed,EN,non_positive_amount:0.0; invalid_transaction_type:Credit; invalid_merchant_category:Finance; invalid_country_code:EN,2026-03-24T14:04:44Z
+648,TXN-0346,ACC-1014,2024-04-15 09:30:00,-127.5,USD,debit,   ,groceries,Completed,US,invalid_transaction_date:2024-04-15 09:30:00; non_positive_amount:-127.5; blank_merchant_name; invalid_status:Completed,2026-03-24T14:04:44Z
+579,TXN-0345,ACC-1007,2024-11-31T14:22:00Z,67.4,GBP,debit,McDonald's,fast_food,completed,UK,invalid_transaction_date:2024-11-31T14:22:00Z; invalid_merchant_category:fast_food; invalid_country_code:UK,2026-03-24T14:04:44Z
+493,TXN-0194,ACC-1009,2024-02-19T21:50:15Z,1481.14,EUR,credit,Shell Gas,transportation,completed,US,duplicate_of:TXN-0348,2026-03-24T14:04:44Z
+613,TXN-0079,ACC-1003,2024-02-20T10:44:01Z,43.05,USD,debit,Sony Electronics,electronics,completed,US,duplicate_of:TXN-0352,2026-03-24T14:04:44Z
+588,TXN-0350,ACC-1020,2024-03-04T16:44:23Z,345.74,EUR,debit,IKEA,retail,completed,GB,duplicate_of:TXN-0178,2026-03-24T14:04:44Z
+530,TXN-0319,ACC-1003,2024-03-04T21:17:09Z,593.75,GBP,debit,Spotify,entertainment,failed,US,duplicate_of:TXN-0349,2026-03-24T14:04:44Z
+521,TXN-0351,ACC-1011,2024-03-17T14:55:04Z,28.47,USD,debit,Sony Electronics,electronics,completed,US,duplicate_of:TXN-0180,2026-03-24T14:04:44Z
