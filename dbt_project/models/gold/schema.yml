@@ -101,8 +101,8 @@ models:
         tests:
           - not_null
           - dbt_expectations.expect_column_values_to_be_between:
-              min_value: "2024-01-01"
-              max_value: "2024-04-30"
+              min_value: "'2024-01-01'"
+              max_value: "'2024-04-30'"
           - relationships:
               to: ref('dim_date')
               field: date_day
