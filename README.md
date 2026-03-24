@@ -391,7 +391,9 @@ After the bronze tables are populated, follow these steps to build all downstrea
 
 ```bash
 git clone <https://github.com/canbaytekin/senior-de-assignment.git>
-cd senior-de-assignment
+open folder in VSCode if we are not in senior-de-assignment directory then open terminal in VSCode and run cd senior-de-assignment
+
+Run below commands line by run in  VSCode terminal.
 
 python3.13 -m venv venv
 source venv/bin/activate
@@ -432,6 +434,10 @@ dbt deps
 ---
 
 ### 4. Run dbt to build all downstream layers
+
+Run below codes in VSCode terminal.
+
+Be sure we are in dbt_project. If not change directory with first command below.
 
 ```bash
 cd dbt_project
