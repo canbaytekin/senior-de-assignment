@@ -28,11 +28,15 @@ models:
         description: "Total debit amount in USD"
         tests:
           - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
 
       - name: total_credit_amount
         description: "Total credit amount in USD"
         tests:
           - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
 
       - name: net_amount
         description: "Net amount (credits minus debits) in USD"

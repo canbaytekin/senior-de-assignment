@@ -17,11 +17,15 @@ models:
         description: "Application-level unique identifier in TXN-NNNN format. Used as the business key — not the Supabase internal id. Not unique in this table; multiple versions may exist per transaction."
         tests:
           - not_null
+          - dbt_expectations.expect_column_values_to_match_regex:
+              regex: "^TXN-[0-9]{4}$"
 
       - name: account_id
         description: "Account identifier in ACC-NNNN format. The dataset contains 20 accounts: ACC-1001 through ACC-1020."
         tests:
           - not_null
+          - dbt_expectations.expect_column_values_to_match_regex:
+              regex: "^ACC-[0-9]{4}$"
 
       - name: transaction_timestamp
         description: "Full UTC timestamp of the transaction, parsed from the ISO 8601 string in bronze (TIMESTAMP type)."
@@ -37,6 +41,9 @@ models:
         description: "Transaction amount in the original currency. Must be strictly positive (> 0) and rounded to 2 decimal places."
         tests:
           - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              strictly: true
 
       - name: currency
         description: "ISO 4217 three-letter currency code (uppercase). Valid values: USD, EUR, GBP, CHF, JPY, AUD, CAD."
@@ -67,6 +74,8 @@ models:
         description: "ISO 3166-1 alpha-2 country code of the merchant location. Must be exactly two uppercase ASCII letters and an officially assigned code (e.g. US, GB, DE, JP, AU)."
         tests:
           - not_null
+          - dbt_expectations.expect_column_value_lengths_to_equal:
+              value: 2
 
       - name: natural_key_hash
         description: "SHA-256 hash of natural-key fields; change detection key"
@@ -90,3 +99,5 @@ models:
         description: "Sequential version counter per transaction_id, starting at 1."
         tests:
           - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 1

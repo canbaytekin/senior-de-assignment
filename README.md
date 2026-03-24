@@ -2,29 +2,13 @@
 
 ## Overview
 
-This project ingests payment transactions from a Supabase REST API into a Databricks Delta Lake, applies data quality validation, and builds a layered dbt model (silver → gold → marts).
+This project ingests payment transactions from a Supabase REST API into a Databricks Delta Lake under the bronze layer, applies data quality validation, and builds a layered dbt model (silver → gold → marts).
 
 The pipeline has two ingestion modes:
 - **Task 1** (`task1_ingest.py`) — full load: fetches all records, validates, deduplicates, and writes to bronze Delta tables.
 - **Task 3** (`task3_incremental.py`) — incremental load: reads a watermark, fetches only new records, and MERGEs them into existing tables.
 
 dbt then transforms the clean bronze data into silver, gold (dims + facts), and a daily marts aggregation.
-
----
-
-## Setup
-
-### Environment Variables
-
-Create a `.env` file inside the `ingestion/` directory with the following values (shared here since this is an assignment):
-
-```dotenv
-API_BASE_URL=https://fgbjekjqnbmtkmeewexb.supabase.co/rest/v1
-API_ENDPOINT=/transactions
-SUPABASE_API_KEY=sb_publishable_W2MbiakvFFthMHtlrzSkQw_URTiUI6G
-```
-
-The ingestion notebooks (`task1_ingest.py`, `task3_incremental.py`) load these via `shared_utils.py` using `python-dotenv`. Alternatively, you can set them as Databricks cluster environment variables or Databricks secrets.
 
 ---
 
@@ -247,7 +231,7 @@ Every record fetched from the Supabase API goes through an 11-point validation c
 
 Records that fail any check are routed to a **quarantine table** (`bronze.quarantine_transactions`) with their `error_reason` field listing all failures (semicolon-separated). The quarantine table stores every column as STRING so that malformed values (like a negative amount or an invalid currency code) are preserved for investigation rather than lost to a type-cast error.
 
-### Deduplication (Three-Tier Strategy)
+### Deduplication
 
 Duplicate detection uses a SHA-256 hash of 9 business fields (`account_id`, `transaction_date`, `amount`, `currency`, `transaction_type`, `merchant_name`, `merchant_category`, `status`, `country_code`) as a natural key. This hash is computed once and stored alongside each record.
 
@@ -264,7 +248,7 @@ Duplicate detection uses a SHA-256 hash of 9 business fields (`account_id`, `tra
 
 ### Late-Arriving Data Handling
 
-The incremental pipeline (Task 3) uses a watermark-based strategy with a configurable lookback window (default: 2 days). Instead of fetching only records newer than the watermark, it fetches from `watermark - 2 days` to catch records that arrived late in the source system. The MERGE and dedup logic ensure that already-processed records aren't duplicated — only genuinely new records make it into the raw table. The watermark itself never moves backward: if a batch of late-arriving records has dates older than the current watermark, the watermark stays where it is.
+The incremental pipeline (Task 3) uses a watermark-based strategy with a configurable lookback window (30 days). Instead of fetching only records newer than the watermark, it fetches from `watermark - 30 days` to catch records that arrived late in the source system. The MERGE and dedup logic ensure that already-processed records aren't duplicated — only genuinely new records make it into the raw table. The watermark itself never moves backward: if a batch of late-arriving records has dates older than the current watermark, the watermark stays where it is.
 
 ### Silver Layer — SCD Type 2 and Schema Enforcement
 
@@ -286,8 +270,8 @@ The design decisions follow standard Kimball practices:
 
 - **Conformed dimensions** (`dim_account`, `dim_merchant`, `dim_currency`, `dim_date`) are extracted from the fact data so they can be shared across future fact tables — e.g. a `fact_payment_event` added later can reuse the same `dim_account` and `dim_date` without duplication.
 - **Surrogate keys** (`merchant_sk`, `currency_sk`) decouple the fact table from natural keys that could change in the source system, making the schema resilient to upstream changes.
-- **`dim_date`** is a fully generated date spine (not just the distinct dates that appear in transactions), which means analysts can write time-series queries with no gaps — a common requirement for dashboarding and cohort analysis.
-- **`dim_currency`** is intentionally minimal: it contains only the 7 currencies present in the example dataset, with exchange rates hard-coded in the model. The decision not to aggregate transaction amounts across currencies in the mart table is deliberate — cross-currency aggregation without a reliable exchange rate snapshot produces misleading totals. In a production solution I would replace the hard-coded values by sourcing exchange rates from the https://data.ecb.europa.eu/ via(or another source) its public REST API, upsert the latest rates into `dim_currency` with scd2 history, and keep the exchange rate column always current without manual intervention.
+- **`dim_date`** is intentionally minimal: only distinct dates that appear in transactions. I used a shortcut here to finish the assignment more quickly. In a real-world scenario, I would create a full date dimension, which would allow analysts to write time-series queries with no gaps — a common requirement for dashboarding and cohort analysis.
+- **`dim_currency`** is intentionally minimal: it contains only the 7 currencies present in the example dataset, with exchange rates hard-coded in the model. The decision not to aggregate transaction amounts across currencies in the mart table is deliberate — cross-currency aggregation without a reliable exchange rate snapshot produces misleading totals. In a production solution, I would replace the hard-coded values by sourcing exchange rates from https://data.ecb.europa.eu/ via (or from another source) its public REST API, upsert the latest rates into `dim_currency` with SCD Type 2 history, and always keep the exchange rate column current without manual intervention.
 - The **fact table** (`fact_transaction`) holds only foreign keys, additive measures (`amount`, `exchange_rate`), and a few degenerate dimensions (`transaction_type`, `status`), keeping it narrow and scan-efficient for aggregation queries.
 
 The gold star schema (dimensions + fact table) is tested with dbt `relationships` tests that act as foreign key checks:
@@ -336,7 +320,7 @@ Databricks can sync notebooks directly from a Git repository so you don't have t
 
 1. **Open your Databricks workspace** — Log in at your Databricks URL (e.g. `https://<your-workspace>.cloud.databricks.com`).
 
-2. **Navigate to Repos** — In the left sidebar, click **Workspace**, then click **Repos** (under your username). If you don't see a **Repos** folder, click **Home → Repos**.
+2. **Navigate to Repos** — In the left sidebar, click **Workspace**, then click **Repos** (under your username). 
 
 3. **Add the repo** — Click the **Add Repo** button (top-right). In the dialog:
    - **Git repository URL:** paste `https://github.com/canbaytekin/senior-de-assignment.git`
@@ -346,20 +330,29 @@ Databricks can sync notebooks directly from a Git repository so you don't have t
 
    Databricks will clone the repository into your Repos folder.
 
-4. **Navigate to the ingestion notebooks** — Expand **Repos → senior-de-assignment → ingestion** in the sidebar. You should see:
+4. **Create a `.env` file** inside the `ingestion/` directory with the following values (shared here since this is an assignment):
+
+    ```dotenv
+    API_BASE_URL=https://fgbjekjqnbmtkmeewexb.supabase.co/rest/v1
+    API_ENDPOINT=/transactions
+    SUPABASE_API_KEY=sb_publishable_W2MbiakvFFthMHtlrzSkQw_URTiUI6G
+    ```
+
+The ingestion notebooks (`task1_ingest.py`, `task3_incremental.py`) load these via `shared_utils.py` using `python-dotenv`. 
+
+5. **Navigate to the ingestion notebooks** — Expand **Repos → senior-de-assignment → ingestion** in the sidebar. You should see:
    - `shared_utils.py`
    - `task1_ingest.py`
    - `task3_incremental.py`
+   - `test_incremental.py`
 
-5. **Attach a cluster** — Open any notebook (e.g. `task1_ingest.py`). At the top of the notebook, click the cluster dropdown and select a running cluster (or create one). All three notebooks must run on the same cluster.
-
-> **Tip:** If you need to pull the latest changes later, open the repo folder in **Repos**, click the branch name at the top, and click **Pull**.
+6. **Attach a cluster** — Open any notebook (e.g. `task1_ingest.py`). At the top of the notebook, click the cluster dropdown and select a running cluster (or create one).
 
 ---
 
 ## Running the Ingestion (Databricks)
 
-The ingestion notebooks live in the `ingestion/` folder of the repo you just connected. Open them directly from **Repos → senior-de-assignment → ingestion** — no manual file upload needed.
+The ingestion notebooks live in the `ingestion/` folder of the repo you just connected. Open them directly from **Repos → senior-de-assignment → ingestion**.
 
 ### Running the Notebooks
 
@@ -382,20 +375,19 @@ Open `task3_incremental.py` in Databricks and click **Run All**.
 
 This will:
 1. Read the watermark from `workspace.default.ingestion_watermark`
-2. Fetch only new records from the API (with a 2-day lookback for late arrivals)
+2. Fetch only new records from the API (with a 30-day lookback for late arrivals)
 3. MERGE clean records into the raw table and append quarantine rows
 4. Update the watermark
 
-To simulate two incremental runs and verify the watermark advances, you can run Task 3 twice. The output watermark files from the original runs are saved in `outputs/watermark_run1.json` and `outputs/watermark_run2.json` for reference.
+To simulate incremental runs and verify that the watermark advances, `test_incremental.py` is executed between STEP 3 and STEP 4 in the `task3_incremental.py` notebook.
 
 ---
 
 ## Running dbt Models
 
+After the bronze tables are populated, follow these steps to build all downstream layers.
 
-After the bronze tables are populated, 
-
-### 1. Clone the repo and create a virtual environment
+### 1. Clone the repo and create a virtual environment on your local machine
 
 ```bash
 git clone <https://github.com/canbaytekin/senior-de-assignment.git>
@@ -439,15 +431,14 @@ dbt deps
 
 ---
 
-
-run dbt to build all downstream layers:
+### 4. Run dbt to build all downstream layers
 
 ```bash
 cd dbt_project
 dbt build
 ```
 
-Or if you run it second time with full refresh:
+Or if you run it a second time with a full refresh:
 
 ```bash
 cd dbt_project
@@ -469,7 +460,7 @@ The models produce the following tables in the `workspace` catalog:
 
 ## Sample Outputs
 
-Pre-generated output files are not created due I choose to go with databricks+dbt solution. 
+Pre-generated output files are not included because I chose the Databricks + dbt solution.
 
 
 ---
@@ -519,3 +510,25 @@ I'd restructure the medallion layers to better reflect their intended purpose:
 - **Gold** — Build the Kimball star schema (or snowflake schema if needed) on top of the clean, unified silver data. Dimensions and facts would be derived from already-standardised entities, making the gold layer purely about analytical modelling rather than data cleaning.
 
 This separation gives each layer a single, clear responsibility: bronze preserves history, silver unifies and standardises, gold models for analytics.
+
+### Repository Separation — dbt and Databricks Notebooks
+
+Currently, the dbt project and the Databricks ingestion notebooks live in a single repository. In a production setting, I'd split them into **two separate repositories**:
+
+- **Ingestion repo** — Contains the Databricks notebooks (`task1_ingest.py`, `task3_incremental.py`, `shared_utils.py`), the metadata configuration, and any orchestration logic (e.g. Databricks Workflows definitions). This repo would be synced to Databricks via Repos and owned by the team responsible for data ingestion and bronze-layer operations.
+
+- **dbt repo** — Contains the dbt project (`models/`, `macros/`, `dbt_project.yml`, `packages.yml`, tests, and seeds). This repo would be managed independently with its own CI/CD pipeline — running `dbt build` and `dbt test` on pull requests via a CI job against a staging Databricks SQL Warehouse before merging to main.
+
+**Why separate?** The two codebases have different development lifecycles, deployment targets, and ownership boundaries. Ingestion notebooks are executed on Databricks clusters and change when source systems change (new API endpoints, schema drift, new data sources). dbt models change when business logic or analytical requirements evolve (new dimensions, updated mart aggregations, test additions). Coupling them in one repo means a change to an ingestion notebook triggers CI checks for dbt models (and vice versa), slowing down both teams. Separate repos allow each side to version, review, test, and deploy independently — with clear interfaces defined at the bronze/silver table boundary.
+
+### dbt Run Monitoring with Elementary
+
+I'd add observability over dbt runs by integrating the [Elementary](https://www.elementary-data.com/) dbt package — but only as a **data-collection layer**, not as an end-to-end monitoring solution. After each `dbt build`, Elementary captures rich run metadata: model execution times, test results, row counts, schema changes, and freshness checks. I'd use this raw metadata to build **custom monitoring tables** in the warehouse rather than relying on Elementary's own dashboards or alerting features.
+
+**Why build our own on top of Elementary?**
+
+- **Flexibility** — Elementary's built-in monitoring UI and alerting are opinionated. Custom tables let us define our own SLAs, aggregate metrics the way our team needs them, and plug the data into whatever dashboarding or alerting tool we already use (e.g. Grafana, Datadog, or a simple Slack webhook).
+- **Reduced vendor lock-in** — If Elementary becomes unmaintained, changes its licence, or introduces breaking changes, we only lose the data-collection layer — a relatively thin dependency. Our monitoring logic, dashboards, and alerts remain intact because they sit on top of our own tables, not Elementary's UI.
+- **Unified observability** — By landing dbt run metadata into standard Delta tables alongside ingestion pipeline metrics (e.g. watermark progress, row counts from bronze), we can build a single monitoring layer that covers the entire data platform — not just the dbt portion.
+
+In practice, the workflow would be: Elementary collects the run artifacts → a post-run dbt macro or scheduled job materialises the relevant metrics into a `monitoring.dbt_run_history` table → downstream dashboards and alerts consume that table directly.
