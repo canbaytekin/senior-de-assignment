@@ -14,17 +14,18 @@ dbt then transforms the clean bronze data into silver, gold (dims + facts), and 
 
 ## Why This Tech Stack?
 
-Choosing the right tools matters as much as writing the code. Here's the reasoning behind each major technology decision in this project:
 
 ### Databricks + Delta Lake
 
-I went with Databricks as the compute and storage layer because it gives me ACID transactions on top of a data lake — something you really need when you're doing incremental MERGEs and want idempotent writes. Delta Lake's support for time travel also means every ingestion run is auditable: if something goes wrong, I can roll back to a previous table version without rebuilding from scratch. Unity Catalog adds governance on top (catalog → schema → table namespacing), which keeps the medallion layers (bronze_landing, bronze, silver, gold, marts) cleanly separated without resorting to naming hacks.
+I went with Databricks as the compute and storage layer because it gives me ACID transactions on top of a data lake — something you really need when you're doing incremental MERGEs and want idempotent writes. Delta Lake's support for time travel also means every ingestion run is auditable: if something goes wrong, I can roll back to a previous table version without rebuilding from scratch. Unity Catalog adds governance on top, which keeps the medallion layers (bronze_landing, bronze, silver, gold, marts) cleanly separated without resorting to naming hacks.
 
-I considered plain Parquet on S3 + Athena, but that stack doesn't give you MERGE semantics natively — you'd need something like Apache Hudi or Iceberg and a separate query engine. Databricks bundles compute + storage + catalog + scheduling in one managed environment, which keeps infrastructure overhead low for a project like this.
+Databricks bundles compute + storage + catalog + scheduling in one managed environment, which keeps infrastructure overhead low for a project like this.
+
+Databricks allows you to run Python code, SQL code, shell scripts, and load other notebooks to use functions from them for tidy development. This makes it a good candidate for data platform projects.
 
 ### dbt (Data Build Tool)
 
-dbt was a natural fit for the transformation layer. The main advantage is that it lets me define the entire bronze → silver → gold → marts pipeline as modular SQL models with a built-in DAG — dbt figures out the execution order so I don't have to manage dependencies manually. Beyond orchestration, dbt's built-in testing framework (`not_null`, `unique`, `relationships`, `accepted_values`) gives me a lightweight data contract at every layer: if a foreign key breaks between `fact_transaction` and `dim_account`, the pipeline fails loudly instead of silently producing bad aggregations.
+dbt was a natural fit for the transformation layer. The main advantage is that it lets me define the entire bronze → silver → gold → marts pipeline as modular SQL models with a built-in DAG — dbt figures out the execution order so I don't have to manage dependencies manually. Beyond orchestration, dbt's built-in testing framework (`not_null`, `unique`, `relationships`, `accepted_values`) gives me a lightweight data contract at every layer: if a foreign key breaks between `fact_transaction` and `dim_account`, the pipeline fails loudly instead of silently producing bad aggregations. It also has useful libraries like elementary and dbt-expectations for handling cases that the basic functionality of dbt's built-in functions can't handle.
 
 The alternative would have been raw SQL scripts or PySpark notebooks for transformations, but those require manual dependency management and don't come with a declarative testing framework out of the box. dbt also makes it easy to write reusable macros (like the SCD Type 2 macro used in the silver layer) that would otherwise be repetitive boilerplate.
 
@@ -32,9 +33,6 @@ The alternative would have been raw SQL scripts or PySpark notebooks for transfo
 
 The ingestion layer (Task 1 and Task 3) runs as Databricks notebooks written in Python. Python is the practical choice here — it has solid HTTP libraries for calling the Supabase REST API, and PySpark DataFrames are the native way to interact with Delta tables on Databricks. The ingestion logic (pagination, retry with exponential backoff, validation, deduplication) is procedural and fits Python's strengths. Writing the same logic in pure SQL would be awkward at best.
 
-### Supabase as the Data Source
-
-Supabase was the given API for this assignment, but it's worth noting that its auto-generated REST endpoints with built-in filtering (`gte`, `lte`, offset/limit pagination) made incremental loading straightforward — I can pass a date range directly in the query parameters instead of fetching everything and filtering client-side.
 
 ### JSON Schema for Validation Rules
 
@@ -271,7 +269,7 @@ The design decisions follow standard Kimball practices:
 - **Conformed dimensions** (`dim_account`, `dim_merchant`, `dim_currency`, `dim_date`) are extracted from the fact data so they can be shared across future fact tables — e.g. a `fact_payment_event` added later can reuse the same `dim_account` and `dim_date` without duplication.
 - **Surrogate keys** (`merchant_sk`, `currency_sk`) decouple the fact table from natural keys that could change in the source system, making the schema resilient to upstream changes.
 - **`dim_date`** is intentionally minimal: only distinct dates that appear in transactions. I used a shortcut here to finish the assignment more quickly. In a real-world scenario, I would create a full date dimension, which would allow analysts to write time-series queries with no gaps — a common requirement for dashboarding and cohort analysis.
-- **`dim_currency`** is intentionally minimal: it contains only the 7 currencies present in the example dataset, with exchange rates hard-coded in the model. The decision not to aggregate transaction amounts across currencies in the mart table is deliberate — cross-currency aggregation without a reliable exchange rate snapshot produces misleading totals. In a production solution, I would replace the hard-coded values by sourcing exchange rates from https://data.ecb.europa.eu/ via (or from another source) its public REST API, upsert the latest rates into `dim_currency` with SCD Type 2 history, and always keep the exchange rate column current without manual intervention.
+- **`dim_currency`** is intentionally minimal: it contains only the 7 currencies present in the example dataset, with exchange rates hard-coded in the model. The decision not to aggregate transaction amounts across currencies in the mart table is deliberate — cross-currency aggregation without a reliable exchange rate snapshot produces misleading totals. In a production solution, I would replace the hard-coded values by sourcing exchange rates from https://data.ecb.europa.eu/ (or another source) via its public REST API, upsert the latest rates into `dim_currency` with SCD Type 2 history, and always keep the exchange rate column current without manual intervention.
 - The **fact table** (`fact_transaction`) holds only foreign keys, additive measures (`amount`, `exchange_rate`), and a few degenerate dimensions (`transaction_type`, `status`), keeping it narrow and scan-efficient for aggregation queries.
 
 The gold star schema (dimensions + fact table) is tested with dbt `relationships` tests that act as foreign key checks:
@@ -390,11 +388,13 @@ After the bronze tables are populated, follow these steps to build all downstrea
 ### 1. Clone the repo and create a virtual environment on your local machine
 
 ```bash
-git clone <https://github.com/canbaytekin/senior-de-assignment.git>
-open folder in VSCode if we are not in senior-de-assignment directory then open terminal in VSCode and run cd senior-de-assignment
+git clone https://github.com/canbaytekin/senior-de-assignment.git
+cd senior-de-assignment
+```
 
-Run below commands line by run in  VSCode terminal.
+Open the folder in VSCode, then run the following commands line by line in the VSCode terminal:
 
+```bash
 python3.13 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
@@ -435,9 +435,9 @@ dbt deps
 
 ### 4. Run dbt to build all downstream layers
 
-Run below codes in VSCode terminal.
+Run the commands below in the VSCode terminal.
 
-Be sure we are in dbt_project. If not change directory with first command below.
+Make sure you are in the `dbt_project` directory. If not, change to it with the first command below.
 
 ```bash
 cd dbt_project
